@@ -1,0 +1,75 @@
+﻿<!DOCTYPE html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<title>CanvasLayer</title>
+<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=dm53viqGYetZCKR3KLKv2CaMl6UluRhw"></script>
+<script src="http://apps.bdimg.com/libs/jquery/1.11.1/jquery.min.js"></script>
+<!-- WGS84转BD09 start-->
+<script src="https://unpkg.com/gcoord/dist/gcoord.global.prod.js"></script>
+<style type="text/css">
+body, html,#container {width: 100%;height: 100%;overflow: hidden;margin:0;font-family:"微软雅黑";}
+</style>
+</head>
+<body>
+    <div id="container"></div>
+</body>
+</html>
+<script src="qwebchannel.js"></script>
+<script type="text/javascript">
+    var mp = new BMap.Map("container");
+    mp.centerAndZoom(new BMap.Point(106.531204,29.452473), 10);
+    mp.enableScrollWheelZoom();
+    var marker = []
+
+    new QWebChannel(qt.webChannelTransport, function(c) {
+        mw = c.objects.window;
+    });
+
+
+    // mp.addEventListener("click",function(e){
+    //     mw.RcvPoint(e.point.lng,e.point.lat);
+    // });
+
+    function SetPoint(lng, lat, id) {
+        // 将WGS84坐标系的经纬度转换为BD09坐标系的经纬度
+        var bd09LngLat = gcoord.transform(
+            [lng, lat],            // 原始坐标
+            gcoord.WGS84,          // 原始坐标系
+            gcoord.BD09            // 目标坐标系
+        );
+
+        // 查找是否已存在相同id的标注
+        var existingMarker = null;
+        for (var i = 0; i < mp.getOverlays().length; i++) {
+            if (mp.getOverlays()[i].id === id) {
+                existingMarker = mp.getOverlays()[i];
+                break;
+            }
+        }
+
+        // 如果存在相同id的标注，则更新位置
+        if (existingMarker !== null) {
+            existingMarker.setPosition(new BMap.Point(bd09LngLat[0], bd09LngLat[1]));
+        } else {
+            // 创建新的标注
+            var point = new BMap.Point(bd09LngLat[0], bd09LngLat[1]);
+            var marker = new BMap.Marker(point);
+            marker.id = id;
+
+            // 创建标注文本
+            var label = new BMap.Label("ID号：" + id, { offset: new BMap.Size(20, -10) });
+            label.setStyle({ backgroundColor: "#fff", border: "1px solid #ccc", padding: "5px" });
+            marker.setLabel(label);
+
+            mp.addOverlay(marker);
+        }
+    }
+
+
+
+    // function SetPoint(lng,lat){
+    //     mp.setCenter(new BMap.Point(lng,lat));
+    // }
+
+</script>
